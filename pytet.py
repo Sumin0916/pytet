@@ -157,13 +157,13 @@ while True:
     if key == 'q':
         print('Game terminated...')
         break
-    elif key == 'a': # move left
+    elif key == 'a':
         left -= 1
-    elif key == 'd': # move right
+    elif key == 'd':
         left += 1
-    elif key == 's': # move down
+    elif key == 's':
         top += 1
-    elif key == 'w': # rotate the block clockwise
+    elif key == 'w':
         cur_blc_lst = rotate(cur_blc_lst)
         currBlk = Matrix(cur_blc_lst)
     elif key == ' ':
@@ -181,14 +181,14 @@ while True:
     tempBlk = iScreen.clip(top, left, top+currBlk.get_dy(), left+currBlk.get_dx())
     tempBlk = tempBlk + currBlk
     if tempBlk.anyGreaterThan(1):
-        if key == 'a': # undo: move right
+        if key == 'a':
             left += 1
-        elif key == 'd': # undo: move left
+        elif key == 'd':
             left -= 1
-        elif key == 's': # undo: move up
+        elif key == 's':
             top -= 1
             newBlockNeeded = True
-        elif key == 'w': # undo: rotate the block counter-clockwise
+        elif key == 'w':
             for i in range(3):
                 cur_blc_lst = rotate(cur_blc_lst)
             currBlk = Matrix(cur_blc_lst)
@@ -200,7 +200,6 @@ while True:
     draw_matrix(oScreen); print()
 
     if newBlockNeeded:
-        print("새로운 블럭 생성!!!!!!")
         iScreen = Matrix(oScreen)
         top = 0
         cur_blc_lst = arrayBlk_lst[random.randrange(0,7)]
