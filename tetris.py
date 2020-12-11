@@ -92,18 +92,17 @@ class Tetris():
                     count += 1
             if (count >= self.iScreenDx):
                 y_index_list.append(y)
-                print(y_index_list)
                 #remove fill line
             for y in y_index_list:
-                for x in (oScreen_left_index,oScreen_right_index):
+                for x in range(oScreen_left_index,oScreen_right_index):
                     Screen_array[y][x] = 0
                 #fill space room
             for y in range(oScreen_hight, 0, -1):
-                for x in (oScreen_left_index,oScreen_right_index):
+                for x in range(oScreen_left_index,oScreen_right_index):
                     if (Screen_array[y][x] == 1):
                         Screen_array[y+1][x] = 1
                         Screen_array[y][x] = 0
-        return
+        print()
 
     def accept(self, key):
         if (self.state == TetrisState.NewBlock): # 0 = 실행중, 1 = 새로운 블럭, 2 = 종료
