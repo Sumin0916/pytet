@@ -1,19 +1,41 @@
 from matrix import *
 from random import *
 from enum import Enum
+#import LED_display as LMD 
 
+class TextColor():
+    red    = "\033[31m"
+    green  = "\033[32m"
+    yellow = "\033[33m"
+    blue   = "\033[34m"
+    purple = "\033[35m"
+    cyan   = "\033[36m"
+    white  = "\033[37m"
+    pink   = "\033[95m"
+### end of class TextColor():
 
 class TetrisState(Enum):
     Running = 0
     NewBlock = 1
     Finished = 2
-
+### end of class TetrisState():
 
 class Tetris():
     nBlockTypes = 0
     nBlockDegrees = 0
     setOfBlockObjects = 0
     iScreenDw = 0   # larget enough to cover the largest block
+
+    def __init__(self, iScreenDy, iScreenDx):
+        self.iScreenDy = iScreenDy
+        self.iScreenDx = iScreenDx
+        self.idxBlockType = -1
+        self.idxBlockDegree = 0
+        arrayScreen = self.createArrayScreen()
+        self.iScreen = Matrix(arrayScreen)
+        self.oScreen = Matrix(self.iScreen)
+        self.justStarted = True
+        return
 
     @classmethod
     def init(cls, setOfBlockArrays):
@@ -28,9 +50,11 @@ class Tetris():
 
         for i in range(Tetris.nBlockTypes):
             for j in range(Tetris.nBlockDegrees):
-                Tetris.setOfBlockObjects[i][j] = Matrix(setOfBlockArrays[i][j])
+                mat = Matrix(setOfBlockArrays[i][j])
+                mat.mulc(i+1)
+                Tetris.setOfBlockObjects[i][j] = mat
         return
-		
+
     def createArrayScreen(self):
         self.arrayScreenDx = Tetris.iScreenDw * 2 + self.iScreenDx
         self.arrayScreenDy = self.iScreenDy + Tetris.iScreenDw
@@ -48,19 +72,24 @@ class Tetris():
                 self.arrayScreen[self.iScreenDy + y][x] = 1
 
         return self.arrayScreen
-		
-    def __init__(self, iScreenDy, iScreenDx):
+
+    def accept(self, key):
         self.state = TetrisState.NewBlock
-        self.iScreenDy = iScreenDy
-        self.iScreenDx = iScreenDx
-        self.idxBlockDegree = 0
-        arrayScreen = self.createArrayScreen()
-        self.iScreen = Matrix(arrayScreen)
-        self.oScreen = Matrix(self.iScreen)
-        self.justStarted = True
+
         self.top = 0
         self.left = Tetris.iScreenDw + self.iScreenDx//2 - 2
-        return
+        self.idxBlockType = (1 + self.idxBlockType) % Tetris.nBlockTypes
+        self.idxBlockDegree = 0
+        self.currBlk = Tetris.setOfBlockObjects[self.idxBlockType][self.idxBlockDegree]
+        self.tempBlk = self.iScreen.clip(self.top, self.left, self.top+self.currBlk.get_dy(), self.left+self.currBlk.get_dx())
+        self.tbinBlk = self.tempBlk.binary() + self.currBlk.binary()
+        self.tempBlk = self.tempBlk + self.currBlk
+        print()
+
+        self.oScreen = Matrix(self.iScreen)
+        self.oScreen.paste(self.tempBlk, self.top, self.left)
+
+        return self.state
 
     def printScreen(self):
         array = self.oScreen.get_array()
@@ -68,101 +97,38 @@ class Tetris():
         for y in range(self.oScreen.get_dy()-Tetris.iScreenDw):
             for x in range(Tetris.iScreenDw, self.oScreen.get_dx()-Tetris.iScreenDw):
                 if array[y][x] == 0:
-                    print("□", end='')
-
+#                    LMD.set_pixel(y, 19-x, 0)
+                    print(TextColor().white + "□", end='')
                 elif array[y][x] == 1:
-                    print("■", end='')
-
+#                    LMD.set_pixel(y, 19-x, 1)
+                    print(TextColor().white + "■", end='')
+                elif array[y][x] == 2:
+#                    LMD.set_pixel(y, 19-x, 2)
+                    print(TextColor().pink + "■", end='')
+                elif array[y][x] == 3:
+#                    LMD.set_pixel(y, 19-x, 3)
+                    print(TextColor().red + "■", end='')
+                elif array[y][x] == 4:
+#                    LMD.set_pixel(y, 19-x, 4)
+                    print(TextColor().green + "■", end='')
+                elif array[y][x] == 5:
+#                    LMD.set_pixel(y, 19-x, 5)
+                    print(TextColor().yellow + "■", end='')
+                elif array[y][x] == 6:
+#                    LMD.set_pixel(y, 19-x, 6)
+                    print(TextColor().blue + "■", end='')
+                elif array[y][x] == 7:
+#                    LMD.set_pixel(y, 19-x, 7)
+                    print(TextColor().cyan + "■", end='')
+                elif array[y][x] == 8:
+#                    LMD.set_pixel(y, 19-x, 2)
+                    print(TextColor().purple + "■", end='')
                 else:
                     print("XX", end='')
-
             print()
 
-    def deleteFullLines(self): #deleteFullLines 함수 완성 (accept 함수에서 호출하는 함수로, 바닥면에 블록 고정시 지워야 할 라인들을 파악해서 지워주는 기능을 완성함)
-        oScreen_right_index = self.oScreen.get_dx()-Tetris.iScreenDw
-        oScreen_left_index = Tetris.iScreenDw
-        oScreen_hight =self.oScreen.get_dy()-Tetris.iScreenDw
-        Screen_array = self.oScreen.get_array()
-        count = 0
-        y_index_list = []
-        for y in range(oScreen_hight):
-            count = 0
-            for x in (oScreen_left_index,oScreen_right_index):
-                if(Screen_array[y][x] == 1):
-                    count += 1
-            if (count >= self.iScreenDx):
-                y_index_list.append(y)
-                #remove fill line
-            for y in y_index_list:
-                for x in range(oScreen_left_index,oScreen_right_index):
-                    Screen_array[y][x] = 0
-                #fill space room
-            for y in range(oScreen_hight, 0, -1):
-                for x in range(oScreen_left_index,oScreen_right_index):
-                    if (Screen_array[y][x] == 1):
-                        Screen_array[y+1][x] = 1
-                        Screen_array[y][x] = 0
-        print()
+    def deleteFullLines(self):
+        return
 
-    def accept(self, key):
-        if (self.state == TetrisState.NewBlock): # 0 = 실행중, 1 = 새로운 블럭, 2 = 종료
-            self.state = TetrisState.Running #더이상 새로운 블럭이 필요하지 않으므로 변경
-            self.iScreen = Matrix(self.oScreen)
-            self.idxBlockType = int(key) #main에서 새로운 블럭이 필요할 때 키를 문자열로 줌
-            #__init__coordinate
-            self.top = 0 
-            self.left = Tetris.iScreenDw + self.iScreenDx//2 - 2
-            #tempBlk 생성과정
-            self.currBlk = Matrix(Tetris.setOfBlockObjects[self.idxBlockType][self.idxBlockDegree])
-            self.tempBlk = self.iScreen.clip(self.top, self.left, self.top+self.currBlk.get_dy(), self.left+self.currBlk.get_dx())
-            self.tempBlk = self.tempBlk + self.currBlk
-        # 일단 충돌 상관없이 현재 블록을 옮겨본다
-        if key == 'a':
-            self.left -= 1
-        elif key == 'd':
-            self.left += 1
-        elif key == 's':
-            self.top += 1
-        elif key == 'w':
-            print(self.idxBlockDegree)
-            if self.idxBlockDegree >2:
-                self.idxBlockDegree = 0
-            else:
-                self.idxBlockDegree +=1
-            self.currBlk = Matrix(Tetris.setOfBlockObjects[self.idxBlockType][self.idxBlockDegree])
-        elif key == ' ': 
-            while True:
-                if (self.tempBlk.anyGreaterThan(1)):
-                    self.top -=1
-                    self.state = TetrisState.NewBlock
-                    self.tempBlk = self.iScreen.clip(self.top, self.left, self.top+self.currBlk.get_dy() , self.left+self.currBlk.get_dx())
-                    self.tempBlk = self.tempBlk + self.currBlk
-                    break
-                self.top +=1
-                self.tempBlk = self.iScreen.clip(self.top, self.left, self.top+self.currBlk.get_dy() , self.left+self.currBlk.get_dx())
-                self.tempBlk = self.tempBlk + self.currBlk
-        else: #예외 입력 처리
-            print('The command does not exist.')
-        # 변경된 블록 tempBlk에 적용
-        self.tempBlk = self.iScreen.clip(self.top, self.left, self.top+self.currBlk.get_dy(), self.left+self.currBlk.get_dx())
-        self.tempBlk = self.tempBlk + self.currBlk 
-        if self.tempBlk.anyGreaterThan(1):
-            if key == 'a': 
-                self.left += 1
-            elif key == 'd': 
-                self.left -= 1
-            elif key == 's':
-                self.top -= 1
-                self.state = TetrisState.NewBlock
-            elif key == 'w':
-                self.idxBlockDegree -=1
-                self.currBlk = Matrix(Tetris.setOfBlockObjects[self.idxBlockType][self.idxBlockDegree])
-            # Key ' '인 경우는 위에서 한번에 처리하였음.
-            #되돌리기한 값 적용하기
-            self.tempBlk = self.iScreen.clip(self.top, self.left, self.top+self.currBlk.get_dy(), self.left+self.currBlk.get_dx())
-            self.tempBlk = self.tempBlk + self.currBlk
-        # 최종적으로 위 과정을 거친 tempBlk 화면에 적용
-        self.oScreen = Matrix(self.iScreen)
-        self.oScreen.paste(self.tempBlk, self.top, self.left)   
-        Tetris.deleteFullLines(self) #마지막으로 함수를 호출하고 종료
-        return self.state
+### end of class Tetris():
+    
